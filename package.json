@@ -1,0 +1,18 @@
+{
+  "name": "typetactoe",
+  "version": "0.0.1",
+  "description": "Tic Tac Toe Game for Showing TypeScript Capabilities",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --require @babel/register src/**/*.spec.js"
+  },
+  "author": "David Tanzer",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@babel/core": "^7.7.7",
+    "@babel/preset-env": "^7.7.7",
+    "@babel/register": "^7.7.7",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.2"
+  }
+}
