@@ -21,6 +21,9 @@ export class Board {
 	}
 	
 	set(row, column, playerCharacter) {
+		if(!(isValidRow(row) && isValidColumn(column))) {
+			throw 'Illegal coordinates '+row+'-'+column;
+		}
 		if(!(playerCharacter === 'X' || playerCharacter === 'O')) {
 			throw 'Illegal player character: "'+playerCharacter+'"';
 		}
@@ -35,4 +38,12 @@ export class Board {
 		this.rows[row][column] = playerCharacter;
 		this.nextPlayer = otherPlayer;
 	}
+}
+
+function isValidRow(row) {
+	return row === 'TOP' || row === 'MIDDLE' || row === 'BOTTOM';
+}
+
+function isValidColumn(column) {
+	return column === 'LEFT' || column === 'CENTER' || column === 'RIGHT';
 }

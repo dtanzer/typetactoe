@@ -52,4 +52,10 @@ describe('typetactoe', () => {
 			const otherPlayer = { X: 'O', O: 'X' }[player];
 			expect(() => board.set('BOTTOM', 'RIGHT', seq[turn])).to.throw('Illegal move by '+player+': It is '+otherPlayer+'\'s move');
 	}));
+
+	[['X', 'LEFT'], ['TOP', 'X'], ['X', 'Y']].forEach(pair => it('throws an exception for illegal coordinates '+pair[0]+'-'+pair[1], ()=>{
+		const board = new Board();
+
+		expect(() => board.set(pair[0], pair[1], 'X')).to.throw('Illegal coordinates '+pair[0]+'-'+pair[1]);
+	}));
 });
