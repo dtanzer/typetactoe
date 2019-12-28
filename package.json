@@ -4,7 +4,8 @@
   "description": "Tic Tac Toe Game for Showing TypeScript Capabilities",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --require @babel/register src/**/*.spec.js"
+    "test": "mocha --require @babel/register src/**/*.spec.js",
+    "test:watch": "npm run test -- --watch"
   },
   "author": "David Tanzer",
   "license": "Apache-2.0",
