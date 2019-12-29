@@ -1,4 +1,4 @@
-import { Player } from './tictactoe';
+import { Player, RowCoordinate, ColumnCoordinate } from './tictactoe';
 
 import {expect} from 'chai';
 import 'mocha';
@@ -6,7 +6,7 @@ import 'mocha';
 import {Board} from './tictactoe'
 
 describe('typetactoe', () => {
-	['TOP', 'MIDDLE', 'BOTTOM'].forEach(row => ['LEFT', 'CENTER', 'RIGHT'].forEach(column => {
+	['TOP', 'MIDDLE', 'BOTTOM'].forEach((row: RowCoordinate) => ['LEFT', 'CENTER', 'RIGHT'].forEach((column: ColumnCoordinate) => {
 		it('sets the the value at ['+row+'-'+column+'] to X', () => {
 			const board = new Board();
 
@@ -25,8 +25,8 @@ describe('typetactoe', () => {
 
 	[['O'], ['X', 'X'], ['X', 'O', 'O'], ['X', 'O', 'X', 'O', 'X', 'O', 'O']].forEach(seq => 
 		it('throws and exception when it is not player\'s turn (turn '+seq.length+', player'+seq[seq.length-1]+')', () => {
-			const rows = ['TOP', 'MIDDLE', 'BOTTOM'];
-			const cols = ['LEFT', 'CENTER', 'RIGHT'];
+			const rows: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
+			const cols: ColumnCoordinate[] = ['LEFT', 'CENTER', 'RIGHT'];
 
 			const board = new Board();
 			var turn = 0;
@@ -42,12 +42,6 @@ describe('typetactoe', () => {
 			const player: Player = seq[seq.length-1]==='X'? 'X' : 'O';
 			const otherPlayer = player==='X'? 'O' : 'X';
 			expect(() => board.set('BOTTOM', 'RIGHT', player)).to.throw('Illegal move by '+player+': It is '+otherPlayer+'\'s move');
-	}));
-
-	[['X', 'LEFT'], ['TOP', 'X'], ['X', 'Y']].forEach(pair => it('throws an exception for illegal coordinates '+pair[0]+'-'+pair[1], ()=>{
-		const board = new Board();
-
-		expect(() => board.set(pair[0], pair[1], 'X')).to.throw('Illegal coordinates '+pair[0]+'-'+pair[1]);
 	}));
 
 	['X', 'O'].forEach(player => [

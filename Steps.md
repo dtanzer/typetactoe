@@ -33,3 +33,32 @@ Now the check for the player character can be removed from the production code:
     }
 
 7 Tests removed - 51 passing. Two boolean sub-expressions and one exception removed from production code.
+
+## Step 2: Type for RowCoordinate and ColumnCoordinate
+
+    export type ColumnCoordinate = 'LEFT' | 'CENTER' | 'RIGHT';
+    export type RowCoordinate = 'TOP' | 'MIDDLE' | 'BOTTOM';
+
+Tests for illegal row coordinate cannot be written anymore:
+
+    [['X', 'LEFT'], ['TOP', 'X'], ['X', 'Y']].forEach(pair => it('throws an exception for illegal coordinates '+pair[0]+'-'+pair[1], ()=>{
+        const board = new Board();
+
+        expect(() => board.set(pair[0], pair[1], 'X')).to.throw('Illegal coordinates '+pair[0]+'-'+pair[1]);
+    }));
+
+Now the checks for illegal coordinates in the production code can be removed too:
+
+    if(!(isValidRow(row) && isValidColumn(column))) {
+        throw 'Illegal coordinates '+row+'-'+column;
+    }
+
+    function isValidRow(row) {
+        return row === 'TOP' || row === 'MIDDLE' || row === 'BOTTOM';
+    }
+
+    function isValidColumn(column) {
+        return column === 'LEFT' || column === 'CENTER' || column === 'RIGHT';
+    }
+
+3 Tests removed - 48 passing. Two boolean sub-expression, one exception and two helper functions removed from production code.
