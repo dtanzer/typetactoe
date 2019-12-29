@@ -36,6 +36,9 @@ class Rows {
 	}
 }
 
+const rowCoordinates: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
+const colCoordinates: ColumnCoordinate[] = ['LEFT', 'CENTER', 'RIGHT'];
+
 export class Board {
 	rows: Rows;
 	nextPlayer: any;
@@ -62,8 +65,8 @@ export class Board {
 	}
 
 	status() {
-		const isFull = ['TOP', 'MIDDLE', 'BOTTOM'].reduce((prev, row) => 
-			prev && ['LEFT', 'CENTER', 'RIGHT'].reduce((prev, col)=> prev && this.rows[row][col]!==' ', true), true);
+		const isFull = rowCoordinates.reduce((prev, row) => 
+			prev && colCoordinates.reduce((prev, col)=> prev && this.rows[row][col]!==' ', true), true);
 
 		if(isFull) return 'Game over, nobody has won.';
 		if(this._hasWon('X')) return 'Player "X" has won.';
@@ -75,8 +78,9 @@ export class Board {
 		return this.rows.render();
 	}
 
-	_hasWon(player) {
-		const winningCombinations = [
+	_hasWon(player: Player) {
+		type Coord = [RowCoordinate, ColumnCoordinate];
+		const winningCombinations: [Coord, Coord, Coord][] = [
 			[['TOP', 'LEFT'], ['TOP', 'CENTER'], ['TOP', 'RIGHT']],
 			[['MIDDLE', 'LEFT'], ['MIDDLE', 'CENTER'], ['MIDDLE', 'RIGHT']],
 			[['BOTTOM', 'LEFT'], ['BOTTOM', 'CENTER'], ['BOTTOM', 'RIGHT']],
@@ -89,7 +93,7 @@ export class Board {
 			[['TOP', 'RIGHT'], ['MIDDLE', 'CENTER'], ['BOTTOM', 'LEFT']]
 		];
 
-		const hasWonCombination = c => {
+		const hasWonCombination = (c: [Coord, Coord, Coord]) => {
 			return this.rows[c[0][0]][c[0][1]] === player &&
 				this.rows[c[1][0]][c[1][1]] === player &&
 				this.rows[c[2][0]][c[2][1]] === player;

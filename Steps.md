@@ -62,3 +62,7 @@ Now the checks for illegal coordinates in the production code can be removed too
     }
 
 3 Tests removed - 48 passing. Two boolean sub-expression, one exception and two helper functions removed from production code.
+
+## Step 3: Enabled Strict Type Checking
+
+...this required me to add some more type annotations; Otherwise, everything is still the same as after Step 2.

@@ -6,7 +6,10 @@ import 'mocha';
 import {Board} from './tictactoe'
 
 describe('typetactoe', () => {
-	['TOP', 'MIDDLE', 'BOTTOM'].forEach((row: RowCoordinate) => ['LEFT', 'CENTER', 'RIGHT'].forEach((column: ColumnCoordinate) => {
+	const rowCoordinates: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
+	const colCoordinates: ColumnCoordinate[] = ['LEFT', 'CENTER', 'RIGHT'];
+
+	rowCoordinates.forEach((row: RowCoordinate) => colCoordinates.forEach((column: ColumnCoordinate) => {
 		it('sets the the value at ['+row+'-'+column+'] to X', () => {
 			const board = new Board();
 
@@ -25,15 +28,12 @@ describe('typetactoe', () => {
 
 	[['O'], ['X', 'X'], ['X', 'O', 'O'], ['X', 'O', 'X', 'O', 'X', 'O', 'O']].forEach(seq => 
 		it('throws and exception when it is not player\'s turn (turn '+seq.length+', player'+seq[seq.length-1]+')', () => {
-			const rows: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
-			const cols: ColumnCoordinate[] = ['LEFT', 'CENTER', 'RIGHT'];
-
 			const board = new Board();
 			var turn = 0;
-			for(var r = 0; r<rows.length; r++) {
-				for(var c=0; c<cols.length; c++) {
+			for(var r = 0; r<rowCoordinates.length; r++) {
+				for(var c=0; c<colCoordinates.length; c++) {
 					if(turn < seq.length-1) {
-						board.set(rows[r], cols[c], seq[turn]==='X'? 'X' : 'O');
+						board.set(rowCoordinates[r], colCoordinates[c], seq[turn]==='X'? 'X' : 'O');
 						turn++;
 					}
 				}
@@ -44,7 +44,8 @@ describe('typetactoe', () => {
 			expect(() => board.set('BOTTOM', 'RIGHT', player)).to.throw('Illegal move by '+player+': It is '+otherPlayer+'\'s move');
 	}));
 
-	['X', 'O'].forEach(player => [
+	const players: Player[] = ['X', 'O'];
+	players.forEach(player => [
 		[1,1,1,0,0,0,0,0,0],
 		[0,0,0,1,1,1,0,0,0],
 		[0,0,0,0,0,0,1,1,1],
@@ -59,7 +60,7 @@ describe('typetactoe', () => {
 
 		winningCombo.forEach((played, i) => {
 			const cellPlayer = played===1? player : ' ';
-			board.rows[['TOP', 'MIDDLE', 'BOTTOM'][row]][['LEFT', 'CENTER', 'RIGHT'][col]]=cellPlayer;
+			board.rows[rowCoordinates[row]][colCoordinates[col]]=cellPlayer;
 			col++;
 			if(col>2) {
 				col=0; row++;
