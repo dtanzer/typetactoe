@@ -1,4 +1,6 @@
 import {expect} from 'chai';
+import 'mocha';
+
 import {Board} from './tictactoe'
 
 describe('typetactoe', () => {
@@ -49,7 +51,7 @@ describe('typetactoe', () => {
 			}
 
 			const player = seq[seq.length-1];
-			const otherPlayer = { X: 'O', O: 'X' }[player];
+			const otherPlayer = player==='X'? 'O' : 'X';
 			expect(() => board.set('BOTTOM', 'RIGHT', seq[turn])).to.throw('Illegal move by '+player+': It is '+otherPlayer+'\'s move');
 	}));
 

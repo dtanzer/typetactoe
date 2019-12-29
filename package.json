@@ -4,7 +4,7 @@
   "description": "Tic Tac Toe Game for Showing TypeScript Capabilities",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --require @babel/register src/**/*.spec.js",
+    "test": "mocha --require ts-node/register src/**/*.spec.ts",
     "test:watch": "npm run test -- --watch"
   },
   "author": "David Tanzer",
@@ -13,7 +13,13 @@
     "@babel/core": "^7.7.7",
     "@babel/preset-env": "^7.7.7",
     "@babel/register": "^7.7.7",
+    "@types/chai": "^4.2.7",
+    "@types/mocha": "^5.2.7",
     "chai": "^4.2.0",
-    "mocha": "^6.2.2"
+    "mocha": "^6.2.2",
+    "ts-node": "^8.5.4"
+  },
+  "dependencies": {
+    "typescript": "^3.7.4"
   }
 }

@@ -1,20 +1,39 @@
 class Columns {
+	LEFT: any;
+	CENTER: any;
+	RIGHT: any;
+
 	constructor(LEFT, CENTER, RIGHT) {
 		this.LEFT = LEFT;
 		this.CENTER = CENTER;
 		this.RIGHT = RIGHT;
 	}
+
+	render() {
+		return ' ' + this.LEFT + ' | ' + this.CENTER + ' | ' + this.RIGHT;
+	}
 }
 
 class Rows {
+	TOP: any;
+	MIDDLE: any;
+	BOTTOM: any;
+
 	constructor(TOP, MIDDLE, BOTTOM) {
 		this.TOP = TOP;
 		this.MIDDLE = MIDDLE;
 		this.BOTTOM = BOTTOM;
 	}
+
+	render() {
+		return this.TOP.render() + '\n---+---+---\n' + this.MIDDLE.render() + '\n---+---+---\n' + this.BOTTOM.render();
+	}
 }
 
 export class Board {
+	rows: any;
+	nextPlayer: any;
+
 	constructor() {
 		this.rows = new Rows(new Columns(' ', ' ', ' '), new Columns(' ', ' ', ' '), new Columns(' ', ' ', ' '))
 		this.nextPlayer = 'X';
@@ -50,6 +69,10 @@ export class Board {
 		if(this._hasWon('X')) return 'Player "X" has won.';
 		if(this._hasWon('O')) return 'Player "O" has won.';
 		return 'Your move, player "'+this.nextPlayer+'"...';
+	}
+
+	render() {
+		return this.rows.render();
 	}
 
 	_hasWon(player) {
