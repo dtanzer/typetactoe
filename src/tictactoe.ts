@@ -1,9 +1,12 @@
-class Columns {
-	LEFT: any;
-	CENTER: any;
-	RIGHT: any;
+export type Player = 'X' | 'O';
+export type ColumnContent = Player | ' ';
 
-	constructor(LEFT, CENTER, RIGHT) {
+class Columns {
+	LEFT: ColumnContent;
+	CENTER: ColumnContent;
+	RIGHT: ColumnContent;
+
+	constructor(LEFT: ColumnContent, CENTER: ColumnContent, RIGHT: ColumnContent) {
 		this.LEFT = LEFT;
 		this.CENTER = CENTER;
 		this.RIGHT = RIGHT;
@@ -15,11 +18,11 @@ class Columns {
 }
 
 class Rows {
-	TOP: any;
-	MIDDLE: any;
-	BOTTOM: any;
+	TOP: Columns;
+	MIDDLE: Columns;
+	BOTTOM: Columns;
 
-	constructor(TOP, MIDDLE, BOTTOM) {
+	constructor(TOP: Columns, MIDDLE: Columns, BOTTOM: Columns) {
 		this.TOP = TOP;
 		this.MIDDLE = MIDDLE;
 		this.BOTTOM = BOTTOM;
@@ -31,7 +34,7 @@ class Rows {
 }
 
 export class Board {
-	rows: any;
+	rows: Rows;
 	nextPlayer: any;
 
 	constructor() {
@@ -39,15 +42,12 @@ export class Board {
 		this.nextPlayer = 'X';
 	}
 	
-	set(row, column, playerCharacter) {
+	set(row, column, playerCharacter: Player) {
 		if(this._hasWon('X')) throw 'Illegal move by player "'+this.nextPlayer+'": "X" has already won.';
 		if(this._hasWon('O')) throw 'Illegal move by player "'+this.nextPlayer+'": "O" has already won.';
 
 		if(!(isValidRow(row) && isValidColumn(column))) {
 			throw 'Illegal coordinates '+row+'-'+column;
-		}
-		if(!(playerCharacter === 'X' || playerCharacter === 'O')) {
-			throw 'Illegal player character: "'+playerCharacter+'"';
 		}
 		if(this.rows[row][column] !== ' ') {
 			throw 'Illegal move: '+row+'-'+column+' is already occupied by "'+this.rows[row][column]+'"';

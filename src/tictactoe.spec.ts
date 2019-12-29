@@ -1,3 +1,5 @@
+import { Player } from './tictactoe';
+
 import {expect} from 'chai';
 import 'mocha';
 
@@ -13,19 +15,6 @@ describe('typetactoe', () => {
 			expect(board.rows[row][column]).to.equal('X');
 		});
 	}));
-
-	[' ', 'A', 'Y', 'Z', 'N', 'Q'].forEach(value => it('throws an exception when value to set is neither X nor O, but "'+value+'"', () => {
-		const board = new Board();
-
-		expect(() => board.set('TOP', 'LEFT', value)).to.throw('Illegal player character: "'+value+'"');
-	}));
-
-	it('does not throw an exception when player character is valid ("O")', () => {
-		const board = new Board();
-
-		board.set('TOP', 'LEFT', 'X');
-		board.set('TOP', 'CENTER', 'O');
-	});
 
 	it('throws an exception when the field is already occupied', () => {
 		const board = new Board();
@@ -44,15 +33,15 @@ describe('typetactoe', () => {
 			for(var r = 0; r<rows.length; r++) {
 				for(var c=0; c<cols.length; c++) {
 					if(turn < seq.length-1) {
-						board.set(rows[r], cols[c], seq[turn]);
+						board.set(rows[r], cols[c], seq[turn]==='X'? 'X' : 'O');
 						turn++;
 					}
 				}
 			}
 
-			const player = seq[seq.length-1];
+			const player: Player = seq[seq.length-1]==='X'? 'X' : 'O';
 			const otherPlayer = player==='X'? 'O' : 'X';
-			expect(() => board.set('BOTTOM', 'RIGHT', seq[turn])).to.throw('Illegal move by '+player+': It is '+otherPlayer+'\'s move');
+			expect(() => board.set('BOTTOM', 'RIGHT', player)).to.throw('Illegal move by '+player+': It is '+otherPlayer+'\'s move');
 	}));
 
 	[['X', 'LEFT'], ['TOP', 'X'], ['X', 'Y']].forEach(pair => it('throws an exception for illegal coordinates '+pair[0]+'-'+pair[1], ()=>{
