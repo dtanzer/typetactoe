@@ -1,39 +1,39 @@
-import { Board } from './tictactoe';
+import { Board, playX, playO } from './tictactoe';
 
 const board = new Board();
 
-board.set('TOP', 'LEFT', 'X');
-console.log(board.render());
-console.log(board.status());
+const board1 = playX('TOP', 'LEFT')(board);
+console.log(board1.render());
+console.log(board1.status());
 
-board.set('MIDDLE', 'CENTER', 'O');
-console.log(board.render());
-console.log(board.status());
+const board2 = playO('MIDDLE', 'CENTER')(board1);
+console.log(board2.render());
+console.log(board2.status());
 
-board.set('TOP', 'RIGHT', 'X');
-console.log(board.render());
-console.log(board.status());
+const board3 = playX('TOP', 'RIGHT')(board2);
+console.log(board3.render());
+console.log(board3.status());
 
-board.set('TOP', 'CENTER', 'O');
-console.log(board.render());
-console.log(board.status());
+const board4 = playO('TOP', 'CENTER')(board3);
+console.log(board4.render());
+console.log(board4.status());
 
-board.set('BOTTOM', 'CENTER', 'X');
-console.log(board.render());
-console.log(board.status());
+const board5 = playX('BOTTOM', 'CENTER')(board4);
+console.log(board5.render());
+console.log(board5.status());
 
-board.set('MIDDLE', 'LEFT', 'O');
-console.log(board.render());
-console.log(board.status());
+const board6 = playO('MIDDLE', 'LEFT')(board5);
+console.log(board6.render());
+console.log(board6.status());
 
-board.set('MIDDLE', 'RIGHT', 'X');
-console.log(board.render());
-console.log(board.status());
+const board7 = playX('MIDDLE', 'RIGHT')(board6);
+console.log(board7.render());
+console.log(board7.status());
 
-board.set('BOTTOM', 'RIGHT', 'O');
-console.log(board.render());
-console.log(board.status());
+const board8 = playO('BOTTOM', 'RIGHT')(board7);
+console.log(board8.render());
+console.log(board8.status());
 
-board.set('BOTTOM', 'LEFT', 'X');
-console.log(board.render());
-console.log(board.status());
+const board9 = playX('BOTTOM', 'LEFT')(board8);
+console.log(board9.render());
+console.log(board9.status());

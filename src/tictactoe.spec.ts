@@ -1,9 +1,9 @@
-import { Player, RowCoordinate, ColumnCoordinate } from './tictactoe';
+import { Player, RowCoordinate, ColumnCoordinate, Columns, Rows, ColumnContent } from './tictactoe';
 
 import {expect} from 'chai';
 import 'mocha';
 
-import {Board} from './tictactoe'
+import {Board, playX, playO} from './tictactoe'
 
 describe('typetactoe', () => {
 	const rowCoordinates: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
@@ -13,27 +13,30 @@ describe('typetactoe', () => {
 		it('sets the the value at ['+row+'-'+column+'] to X', () => {
 			const board = new Board();
 
-			board.set(row, column, 'X');
+			const newBoard = playX(row, column)(board);
 
-			expect(board.rows[row][column]).to.equal('X');
+			expect(newBoard.rows[row][column]).to.equal('X');
 		});
 	}));
 
 	it('throws an exception when the field is already occupied', () => {
 		const board = new Board();
-		board.set('TOP', 'LEFT', 'X');
+		const newBoard = playX('TOP', 'LEFT')(board);
 
-		expect(() => board.set('TOP', 'LEFT', 'O')).to.throw('Illegal move: TOP-LEFT is already occupied by "X"');
+		expect(() => playO('TOP', 'LEFT')(newBoard)).to.throw('Illegal move: TOP-LEFT is already occupied by "X"');
 	});
 
 	[['O'], ['X', 'X'], ['X', 'O', 'O'], ['X', 'O', 'X', 'O', 'X', 'O', 'O']].forEach(seq => 
 		it('throws and exception when it is not player\'s turn (turn '+seq.length+', player'+seq[seq.length-1]+')', () => {
-			const board = new Board();
+			let board = new Board();
 			var turn = 0;
 			for(var r = 0; r<rowCoordinates.length; r++) {
 				for(var c=0; c<colCoordinates.length; c++) {
 					if(turn < seq.length-1) {
-						board.set(rowCoordinates[r], colCoordinates[c], seq[turn]==='X'? 'X' : 'O');
+						switch(seq[turn]) {
+							case 'X': board = playX(rowCoordinates[r], colCoordinates[c])(board); break;
+							case 'O': board = playO(rowCoordinates[r], colCoordinates[c])(board); break;
+						}
 						turn++;
 					}
 				}
@@ -41,7 +44,13 @@ describe('typetactoe', () => {
 
 			const player: Player = seq[seq.length-1]==='X'? 'X' : 'O';
 			const otherPlayer = player==='X'? 'O' : 'X';
-			expect(() => board.set('BOTTOM', 'RIGHT', player)).to.throw('Illegal move by '+player+': It is '+otherPlayer+'\'s move');
+			const playNext = () => {
+				switch(player) {
+					case 'X': board = playX('BOTTOM', 'RIGHT')(board); break;
+					case 'O': board = playO('BOTTOM', 'RIGHT')(board); break;
+				}
+			}
+			expect(playNext).to.throw('Illegal move by '+player+': It is '+otherPlayer+'\'s move');
 	}));
 
 	const players: Player[] = ['X', 'O'];
@@ -55,17 +64,21 @@ describe('typetactoe', () => {
 		[1,0,0,0,1,0,0,0,1],
 		[0,0,1,0,1,0,1,0,0]
 	].forEach(winningCombo => {
-		const board = new Board();
-		let row=0, col=0;
+		let col=0;
 
+		const allCols : Columns[] = [];
+		let allCells : ColumnContent[] = [];
 		winningCombo.forEach((played, i) => {
 			const cellPlayer = played===1? player : ' ';
-			board.rows[rowCoordinates[row]][colCoordinates[col]]=cellPlayer;
+			allCells.push(cellPlayer);
 			col++;
 			if(col>2) {
-				col=0; row++;
+				allCols.push(new Columns(allCells[0], allCells[1], allCells[2]));
+				allCells = [];
+				col=0;
 			}
 		});
+		const board = new Board(new Rows(allCols[0], allCols[1], allCols[2]));
 
 		it('prints player '+player+' has won when winning combo is '+winningCombo, () => {
 			const status = board.status();
@@ -75,7 +88,7 @@ describe('typetactoe', () => {
 
 		it('does now allow another move when a player has won', () => {
 			const col = winningCombo[3]===1? 'CENTER': 'LEFT';
-			expect(() => board.set('MIDDLE', col, 'X')).to.throw('Illegal move by player "X": "'+player+'" has already won.');
+			expect(() => playX('MIDDLE', col)(board)).to.throw('Illegal move by player "X": "'+player+'" has already won.');
 		});
 	}));
 
@@ -88,17 +101,17 @@ describe('typetactoe', () => {
 	});
 
 	it('Prints game is draw when all cells are filled and nobody has won', () => {
-		const board = new Board();
+		let board = new Board();
 
-		board.set('TOP', 'LEFT', 'X');
-		board.set('MIDDLE', 'CENTER', 'O');
-		board.set('MIDDLE', 'LEFT', 'X');
-		board.set('BOTTOM', 'LEFT', 'O');
-		board.set('TOP', 'RIGHT', 'X');
-		board.set('TOP', 'CENTER', 'O');
-		board.set('BOTTOM', 'CENTER', 'X');
-		board.set('BOTTOM', 'RIGHT', 'O');
-		board.set('MIDDLE', 'RIGHT', 'X');
+		board = playX('TOP', 'LEFT')(board);
+		board = playO('MIDDLE', 'CENTER')(board);
+		board = playX('MIDDLE', 'LEFT')(board);
+		board = playO('BOTTOM', 'LEFT')(board);
+		board = playX('TOP', 'RIGHT')(board);
+		board = playO('TOP', 'CENTER')(board);
+		board = playX('BOTTOM', 'CENTER')(board);
+		board = playO('BOTTOM', 'RIGHT')(board);
+		board = playX('MIDDLE', 'RIGHT')(board);
 
 		const status = board.status();
 		

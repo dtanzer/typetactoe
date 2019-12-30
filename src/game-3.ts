@@ -1,11 +1,11 @@
-import { Board } from './tictactoe';
+import { Board, playX, playO } from './tictactoe';
 
 const board = new Board();
 
-board.set('TOP', 'LEFT', 'X');
-console.log(board.render());
-console.log(board.status());
+const board1 = playX('TOP', 'LEFT')(board);
+console.log(board1.render());
+console.log(board1.status());
 
-board.set('TOP', 'LEFT', 'O');
-console.log(board.render());
-console.log(board.status());
+const board2 = playO('TOP', 'LEFT')(board1);
+console.log(board2.render());
+console.log(board2.status());

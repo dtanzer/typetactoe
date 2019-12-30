@@ -66,3 +66,33 @@ Now the checks for illegal coordinates in the production code can be removed too
 ## Step 3: Enabled Strict Type Checking
 
 ...this required me to add some more type annotations; Otherwise, everything is still the same as after Step 2.
+
+## Step 4: Refactor to Immutable State Transisions
+
+For the next steps, we need immutable state transitions, so I refactored towards them in this step.
+
+    export const playX = (row: RowCoordinate, col: ColumnCoordinate) => (board: Board): Board => board._set(row, col, 'X');
+    export const playO = (row: RowCoordinate, col: ColumnCoordinate) => (board: Board): Board => board._set(row, col, 'O');
+
+Where ```board.set``` was changed to return
+
+    return new Board(this.rows.with(row, column, playerCharacter), playerCharacter==='X'? 'O' : 'X');
+
+It can be used as:
+
+    const board1 = playX('TOP', 'LEFT')(board);
+    console.log(board1.render());
+    console.log(board1.status());
+
+Also, I can already rely on exhaustive switch-checking here because I enabled strict type checking in the previous step.
+
+    with(column: ColumnCoordinate, playerCharacter: Player): Columns {
+        switch(column) {
+            case 'LEFT':
+                return new Columns(playerCharacter, this.CENTER, this.RIGHT);
+            case 'CENTER':
+                return new Columns(this.LEFT, playerCharacter, this.RIGHT);
+            case 'RIGHT':
+                return new Columns(this.LEFT, this.CENTER, playerCharacter);
+        }
+    }

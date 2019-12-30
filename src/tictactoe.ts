@@ -4,7 +4,7 @@ export type ColumnContent = Player | ' ';
 export type ColumnCoordinate = 'LEFT' | 'CENTER' | 'RIGHT';
 export type RowCoordinate = 'TOP' | 'MIDDLE' | 'BOTTOM';
 
-class Columns {
+export class Columns {
 	LEFT: ColumnContent;
 	CENTER: ColumnContent;
 	RIGHT: ColumnContent;
@@ -18,9 +18,20 @@ class Columns {
 	render() {
 		return ' ' + this.LEFT + ' | ' + this.CENTER + ' | ' + this.RIGHT;
 	}
+
+	with(column: ColumnCoordinate, playerCharacter: Player): Columns {
+		switch(column) {
+			case 'LEFT':
+				return new Columns(playerCharacter, this.CENTER, this.RIGHT);
+			case 'CENTER':
+				return new Columns(this.LEFT, playerCharacter, this.RIGHT);
+			case 'RIGHT':
+				return new Columns(this.LEFT, this.CENTER, playerCharacter);
+		}
+	}
 }
 
-class Rows {
+export class Rows {
 	TOP: Columns;
 	MIDDLE: Columns;
 	BOTTOM: Columns;
@@ -34,21 +45,35 @@ class Rows {
 	render() {
 		return this.TOP.render() + '\n---+---+---\n' + this.MIDDLE.render() + '\n---+---+---\n' + this.BOTTOM.render();
 	}
+
+	with(row: RowCoordinate, column: ColumnCoordinate, playerCharacter: Player): Rows {
+		switch(row) {
+			case 'TOP':
+				return new Rows(this.TOP.with(column, playerCharacter), this.MIDDLE, this.BOTTOM);
+			case 'MIDDLE':
+				return new Rows(this.TOP, this.MIDDLE.with(column, playerCharacter), this.BOTTOM);
+			case 'BOTTOM':
+				return new Rows(this.TOP, this.MIDDLE, this.BOTTOM.with(column, playerCharacter));
+		}
+	}
 }
 
 const rowCoordinates: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
 const colCoordinates: ColumnCoordinate[] = ['LEFT', 'CENTER', 'RIGHT'];
 
+export const playX = (row: RowCoordinate, col: ColumnCoordinate) => (board: Board): Board => board._set(row, col, 'X');
+export const playO = (row: RowCoordinate, col: ColumnCoordinate) => (board: Board): Board => board._set(row, col, 'O');
+
 export class Board {
 	rows: Rows;
-	nextPlayer: any;
+	nextPlayer: Player;
 
-	constructor() {
-		this.rows = new Rows(new Columns(' ', ' ', ' '), new Columns(' ', ' ', ' '), new Columns(' ', ' ', ' '))
-		this.nextPlayer = 'X';
+	constructor(rows: Rows = new Rows(new Columns(' ', ' ', ' '), new Columns(' ', ' ', ' '), new Columns(' ', ' ', ' ')), nextPlayer: Player = 'X') {
+		this.rows = rows;
+		this.nextPlayer = nextPlayer;
 	}
 	
-	set(row: RowCoordinate, column: ColumnCoordinate, playerCharacter: Player) {
+	_set(row: RowCoordinate, column: ColumnCoordinate, playerCharacter: Player): Board {
 		if(this._hasWon('X')) throw 'Illegal move by player "'+this.nextPlayer+'": "X" has already won.';
 		if(this._hasWon('O')) throw 'Illegal move by player "'+this.nextPlayer+'": "O" has already won.';
 
@@ -60,8 +85,7 @@ export class Board {
 			throw 'Illegal move by '+playerCharacter+': It is '+otherPlayer+'\'s move';
 		}
 
-		this.rows[row][column] = playerCharacter;
-		this.nextPlayer = otherPlayer;
+		return new Board(this.rows.with(row, column, playerCharacter), playerCharacter==='X'? 'O' : 'X');
 	}
 
 	status() {
