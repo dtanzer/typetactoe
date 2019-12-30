@@ -1,4 +1,6 @@
-export type Player = 'X' | 'O';
+type PlayerX = 'X';
+type PlayerO = 'O';
+export type Player = PlayerX | PlayerO;
 export type ColumnContent = Player | ' ';
 
 export type ColumnCoordinate = 'LEFT' | 'CENTER' | 'RIGHT';
@@ -61,10 +63,33 @@ export class Rows {
 const rowCoordinates: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
 const colCoordinates: ColumnCoordinate[] = ['LEFT', 'CENTER', 'RIGHT'];
 
-export const playX = (row: RowCoordinate, col: ColumnCoordinate) => (board: Board): Board => board._set(row, col, 'X');
-export const playO = (row: RowCoordinate, col: ColumnCoordinate) => (board: Board): Board => board._set(row, col, 'O');
+interface EmptyGame {
+	isEmpty: 'T'
+	R: never
+	C: never
+	P: never
+	PrevGame: never
+};
 
-export class Board {
+interface MoveSequence<R extends RowCoordinate, C extends ColumnCoordinate, P extends Player, Game extends OngoingGame> {
+	isEmpty: 'F'
+	R: R
+	C: C
+	P: P
+	PrevGame: Game
+};
+
+type OngoingGame = EmptyGame | MoveSequence<any, any, any, any>;
+
+export const playX = <R extends RowCoordinate, C extends ColumnCoordinate>(row: R, col: C) => 
+	<Game extends EmptyGame | MoveSequence<any, any, PlayerO, any>>(board: Board<Game>): Board<MoveSequence<R, C, PlayerX, Game>> => 
+	board._setX(row, col);
+export const playO = <R extends RowCoordinate, C extends ColumnCoordinate>(row: R, col: C) => 
+	<Game extends MoveSequence<any, any, PlayerX, any>>(board: Board<Game>): Board<MoveSequence<R, C, PlayerO, Game>> => 
+	board._setO(row, col);
+
+export class Board<Game extends OngoingGame> {
+	_compiler_should_keep_and_check_Game?: Game;
 	rows: Rows;
 	nextPlayer: Player;
 
@@ -73,19 +98,28 @@ export class Board {
 		this.nextPlayer = nextPlayer;
 	}
 	
-	_set(row: RowCoordinate, column: ColumnCoordinate, playerCharacter: Player): Board {
+	_setX<R extends RowCoordinate, C extends ColumnCoordinate>(row: R, column: C): Board<MoveSequence<R, C, PlayerX, Game>> {
 		if(this._hasWon('X')) throw 'Illegal move by player "'+this.nextPlayer+'": "X" has already won.';
 		if(this._hasWon('O')) throw 'Illegal move by player "'+this.nextPlayer+'": "O" has already won.';
 
 		if(this.rows[row][column] !== ' ') {
 			throw 'Illegal move: '+row+'-'+column+' is already occupied by "'+this.rows[row][column]+'"';
 		}
-		const otherPlayer = { X: 'O', O: 'X' }[playerCharacter];
-		if(playerCharacter !== this.nextPlayer) {
-			throw 'Illegal move by '+playerCharacter+': It is '+otherPlayer+'\'s move';
-		}
+		const playerCharacter = 'X';
 
-		return new Board(this.rows.with(row, column, playerCharacter), playerCharacter==='X'? 'O' : 'X');
+		return new Board(this.rows.with(row, column, playerCharacter), 'O');
+	}
+
+	_setO<R extends RowCoordinate, C extends ColumnCoordinate>(row: R, column: C): Board<MoveSequence<R, C, PlayerO, Game>> {
+		if(this._hasWon('X')) throw 'Illegal move by player "'+this.nextPlayer+'": "X" has already won.';
+		if(this._hasWon('O')) throw 'Illegal move by player "'+this.nextPlayer+'": "O" has already won.';
+
+		if(this.rows[row][column] !== ' ') {
+			throw 'Illegal move: '+row+'-'+column+' is already occupied by "'+this.rows[row][column]+'"';
+		}
+		const playerCharacter = 'O';
+
+		return new Board(this.rows.with(row, column, playerCharacter), 'X');
 	}
 
 	status() {

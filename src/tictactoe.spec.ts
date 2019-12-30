@@ -26,33 +26,6 @@ describe('typetactoe', () => {
 		expect(() => playO('TOP', 'LEFT')(newBoard)).to.throw('Illegal move: TOP-LEFT is already occupied by "X"');
 	});
 
-	[['O'], ['X', 'X'], ['X', 'O', 'O'], ['X', 'O', 'X', 'O', 'X', 'O', 'O']].forEach(seq => 
-		it('throws and exception when it is not player\'s turn (turn '+seq.length+', player'+seq[seq.length-1]+')', () => {
-			let board = new Board();
-			var turn = 0;
-			for(var r = 0; r<rowCoordinates.length; r++) {
-				for(var c=0; c<colCoordinates.length; c++) {
-					if(turn < seq.length-1) {
-						switch(seq[turn]) {
-							case 'X': board = playX(rowCoordinates[r], colCoordinates[c])(board); break;
-							case 'O': board = playO(rowCoordinates[r], colCoordinates[c])(board); break;
-						}
-						turn++;
-					}
-				}
-			}
-
-			const player: Player = seq[seq.length-1]==='X'? 'X' : 'O';
-			const otherPlayer = player==='X'? 'O' : 'X';
-			const playNext = () => {
-				switch(player) {
-					case 'X': board = playX('BOTTOM', 'RIGHT')(board); break;
-					case 'O': board = playO('BOTTOM', 'RIGHT')(board); break;
-				}
-			}
-			expect(playNext).to.throw('Illegal move by '+player+': It is '+otherPlayer+'\'s move');
-	}));
-
 	const players: Player[] = ['X', 'O'];
 	players.forEach(player => [
 		[1,1,1,0,0,0,0,0,0],
@@ -101,19 +74,19 @@ describe('typetactoe', () => {
 	});
 
 	it('Prints game is draw when all cells are filled and nobody has won', () => {
-		let board = new Board();
+		const board = new Board();
 
-		board = playX('TOP', 'LEFT')(board);
-		board = playO('MIDDLE', 'CENTER')(board);
-		board = playX('MIDDLE', 'LEFT')(board);
-		board = playO('BOTTOM', 'LEFT')(board);
-		board = playX('TOP', 'RIGHT')(board);
-		board = playO('TOP', 'CENTER')(board);
-		board = playX('BOTTOM', 'CENTER')(board);
-		board = playO('BOTTOM', 'RIGHT')(board);
-		board = playX('MIDDLE', 'RIGHT')(board);
+		const board1 = playX('TOP', 'LEFT')(board);
+		const board2 = playO('MIDDLE', 'CENTER')(board1);
+		const board3 = playX('MIDDLE', 'LEFT')(board2);
+		const board4 = playO('BOTTOM', 'LEFT')(board3);
+		const board5 = playX('TOP', 'RIGHT')(board4);
+		const board6 = playO('TOP', 'CENTER')(board5);
+		const board7 = playX('BOTTOM', 'CENTER')(board6);
+		const board8 = playO('BOTTOM', 'RIGHT')(board7);
+		const board9 = playX('MIDDLE', 'RIGHT')(board8);
 
-		const status = board.status();
+		const status = board9.status();
 		
 		expect(status).to.equal('Game over, nobody has won.');
 	});

@@ -96,3 +96,50 @@ Also, I can already rely on exhaustive switch-checking here because I enabled st
                 return new Columns(this.LEFT, this.CENTER, playerCharacter);
         }
     }
+
+## Step 5: Add Type for Who is Next Player
+
+Added types that remember all past moves of players:
+
+    interface EmptyGame {
+        isEmpty: 'T'
+        R: never
+        C: never
+        P: never
+        PrevGame: never
+    };
+
+    interface MoveSequence<R extends RowCoordinate, C extends ColumnCoordinate, P extends Player, Game extends OngoingGame> {
+        isEmpty: 'F'
+        R: R
+        C: C
+        P: P
+        PrevGame: Game
+    };
+
+    type OngoingGame = EmptyGame | MoveSequence<any, any, any, any>;
+
+With this sequence of all moves, available in the type system, I can re-write ```playX``` and ```playO``` to type-check whether it is _really_ the current player's move:
+
+    export const playX = <R extends RowCoordinate, C extends ColumnCoordinate>(row: R, col: C) => 
+        <Game extends EmptyGame | MoveSequence<any, any, PlayerO, any>>(board: Board<Game>): Board<MoveSequence<R, C, PlayerX, Game>> => 
+        board._setX(row, col);
+
+Now, a move by the wrong player is not possible anymore (see ```game-4.ts```):
+
+    const board1 = playX('TOP', 'LEFT')(board);
+    console.log(board1.render());
+    console.log(board1.status());
+
+    const board1a = playO('TOP', 'LEFT')(board); //compile error: playO is not possible for an empty game
+    const board2 = playX('MIDDLE', 'LEFT')(board1); //compile error: playX is not possible after playX
+
+This means I can also remove the tests
+
+    [['O'], ['X', 'X'], ['X', 'O', 'O'], ['X', 'O', 'X', 'O', 'X', 'O', 'O']].forEach(seq => 
+        it('throws and exception when it is not player\'s turn (turn '+seq.length+', player'+seq[seq.length-1]+')', () => {
+            //...
+        });
+    );
+
+and the checks for the next player. 4 tests removed - 44 passing.
