@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --require ts-node/register src/**/*.spec.ts",
-    "test:watch": "npm run test -- --watch"
+    "test:watch": "npm run test -- --watch",
+    "game": "ts-node"
   },
   "author": "David Tanzer",
   "license": "Apache-2.0",
