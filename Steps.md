@@ -222,6 +222,8 @@ Then the compiler will not even allow me to set a value that has already been se
     const wl = withLeft(emptyCols, 'X', 'LEFT');
     //const wl2 = withLeft(wl, 'O', 'LEFT'); <-- compiler error: has already been set
 
+But I didn't manage to implement the whole setting code (rows and columns) like that. And even if it was possible, it would become quite complicated. Fortunately, there's another way to achieve it (which is quite complicated in a different way)...
+
 Also, the following is **not** possilbe:
 
     const withColumn = <CD extends ColumnData, C extends FreeColumns<CD>, P extends Player>(columns: CD, player: P, col: C): SetColumn<CD, C, P> => {
