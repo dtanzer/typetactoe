@@ -231,3 +231,69 @@ Also, the following is **not** possilbe:
     };
 
 It would require [dependent types](https://en.wikipedia.org/wiki/Dependent_type) like e.g. [Idris](https://en.wikipedia.org/wiki/Idris_(programming_language) has, but those are not (yet?) available in TypeScript.
+
+## Step 7: Add Type that Checks for Free Field
+
+I already keep all previous moves in a list at the type level. So, I can check that list for whether a field was alread played. To do that, I need some helper types:
+
+    type Bool = 'T' | 'F'
+
+    type If<B extends Bool, Then, Else> = {
+        T: Then
+        F: Else
+    }[B]
+
+    type Not<B extends Bool> = If<B, 'F', 'T'>
+
+    type And<B1 extends Bool, B2 extends Bool> = If<B1, B2, 'F'>
+
+    type Eq<A extends string, B extends string> = ({ [K in A]: 'T' } & {
+        [key: string]: 'F'
+    })[B]
+
+    type IsPlayed<R extends RowCoordinate, C extends ColumnCoordinate, G extends OngoingGame> = {
+        T: 'F'
+        F: If<
+            And<Eq<G['R'], R>, Eq<G['C'], C>>, 
+            'T', 
+            IsPlayed<R, C, G['PrevMove']>
+        >
+    }[G['isEmpty']]
+
+Now I can add a second parameter that has the type ```'T'``` when the field is still free and ```never``` when the field is occupied:
+
+    export const playX = <R extends RowCoordinate, C extends ColumnCoordinate>(row: R, col: C) => 
+        <
+            Game extends EmptyGame | MoveSequence<any, any, PlayerO, any>,
+            IsFreeField extends Not<IsPlayed<R, C, Game>>
+        >
+        (board: Board<Game>, isFreeField: IsFreeField & 'T'): Board<MoveSequence<R, C, PlayerX, Game>> => 
+        board._setX(row, col);
+
+Setting a field twice now results in a compiler error (see ```game-3.ts```):
+
+    const board = new Board();
+    const isFreeField = 'T';
+
+    const board1 = playX('TOP', 'LEFT')(board, isFreeField);
+    console.log(board1.render());
+    console.log(board1.status());
+
+    const board2 = playO('TOP', 'LEFT')(board1, isFreeField); //error: cannot assign 'T' to never
+
+The following test does not compile anymore:
+
+    it('throws an exception when the field is already occupied', () => {
+        const board = new Board();
+        const newBoard = playX('TOP', 'LEFT')(board, isFreeField);
+
+        expect(() => playO('TOP', 'LEFT')(newBoard, isFreeField)).to.throw('Illegal move: TOP-LEFT is already occupied by "X"');
+    });
+
+And I can also remove the checks from the production code:
+
+    if(this.rows[row][column] !== ' ') {
+        throw 'Illegal move: '+row+'-'+column+' is already occupied by "'+this.rows[row][column]+'"';
+    }
+
+1 test removed - 34 passing.

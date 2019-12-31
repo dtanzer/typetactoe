@@ -6,12 +6,7 @@ import 'mocha';
 import {Board, playX, playO} from './tictactoe'
 
 describe('typetactoe', () => {
-	it('throws an exception when the field is already occupied', () => {
-		const board = new Board();
-		const newBoard = playX('TOP', 'LEFT')(board);
-
-		expect(() => playO('TOP', 'LEFT')(newBoard)).to.throw('Illegal move: TOP-LEFT is already occupied by "X"');
-	});
+	const isFreeField = 'T';
 
 	const players: Player[] = ['X', 'O'];
 	players.forEach(player => [
@@ -48,7 +43,7 @@ describe('typetactoe', () => {
 
 		it('does now allow another move when a player has won', () => {
 			const col = winningCombo[3]===1? 'CENTER': 'LEFT';
-			expect(() => playX('MIDDLE', col)(board)).to.throw('Illegal move by player "X": "'+player+'" has already won.');
+			expect(() => playX('MIDDLE', col)(board, isFreeField)).to.throw('Illegal move by player "X": "'+player+'" has already won.');
 		});
 	}));
 
@@ -63,15 +58,15 @@ describe('typetactoe', () => {
 	it('Prints game is draw when all cells are filled and nobody has won', () => {
 		const board = new Board();
 
-		const board1 = playX('TOP', 'LEFT')(board);
-		const board2 = playO('MIDDLE', 'CENTER')(board1);
-		const board3 = playX('MIDDLE', 'LEFT')(board2);
-		const board4 = playO('BOTTOM', 'LEFT')(board3);
-		const board5 = playX('TOP', 'RIGHT')(board4);
-		const board6 = playO('TOP', 'CENTER')(board5);
-		const board7 = playX('BOTTOM', 'CENTER')(board6);
-		const board8 = playO('BOTTOM', 'RIGHT')(board7);
-		const board9 = playX('MIDDLE', 'RIGHT')(board8);
+		const board1 = playX('TOP', 'LEFT')(board, isFreeField);
+		const board2 = playO('MIDDLE', 'CENTER')(board1, isFreeField);
+		const board3 = playX('MIDDLE', 'LEFT')(board2, isFreeField);
+		const board4 = playO('BOTTOM', 'LEFT')(board3, isFreeField);
+		const board5 = playX('TOP', 'RIGHT')(board4, isFreeField);
+		const board6 = playO('TOP', 'CENTER')(board5, isFreeField);
+		const board7 = playX('BOTTOM', 'CENTER')(board6, isFreeField);
+		const board8 = playO('BOTTOM', 'RIGHT')(board7, isFreeField);
+		const board9 = playX('MIDDLE', 'RIGHT')(board8, isFreeField);
 
 		const status = board9.status();
 		
