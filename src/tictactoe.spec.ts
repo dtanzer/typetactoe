@@ -6,19 +6,6 @@ import 'mocha';
 import {Board, playX, playO} from './tictactoe'
 
 describe('typetactoe', () => {
-	const rowCoordinates: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
-	const colCoordinates: ColumnCoordinate[] = ['LEFT', 'CENTER', 'RIGHT'];
-
-	rowCoordinates.forEach((row: RowCoordinate) => colCoordinates.forEach((column: ColumnCoordinate) => {
-		it('sets the the value at ['+row+'-'+column+'] to X', () => {
-			const board = new Board();
-
-			const newBoard = playX(row, column)(board);
-
-			expect(newBoard.rows[row][column]).to.equal('X');
-		});
-	}));
-
 	it('throws an exception when the field is already occupied', () => {
 		const board = new Board();
 		const newBoard = playX('TOP', 'LEFT')(board);
@@ -46,12 +33,12 @@ describe('typetactoe', () => {
 			allCells.push(cellPlayer);
 			col++;
 			if(col>2) {
-				allCols.push(new Columns(allCells[0], allCells[1], allCells[2]));
+				allCols.push({ LEFT: allCells[0], CENTER: allCells[1], RIGHT: allCells[2]});
 				allCells = [];
 				col=0;
 			}
 		});
-		const board = new Board(new Rows(allCols[0], allCols[1], allCols[2]));
+		const board = new Board({ TOP: allCols[0], MIDDLE: allCols[1], BOTTOM: allCols[2]});
 
 		it('prints player '+player+' has won when winning combo is '+winningCombo, () => {
 			const status = board.status();

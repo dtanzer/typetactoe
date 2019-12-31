@@ -143,3 +143,89 @@ This means I can also remove the tests
     );
 
 and the checks for the next player. 4 tests removed - 44 passing.
+
+## Step 6: Add Type to Check Whether Correct Field is Set
+
+Instead of using classes for rows and columns, I now use simple mapped types:
+
+    export type Columns = { readonly [key in ColumnCoordinate]: ColumnContent };
+    export type EmptyColumns = { readonly [key in ColumnCoordinate]: ' ' };
+
+Now I can create a type that ensures that a certain field was set:
+
+    export type SetColumn<CD extends Columns, C extends ColumnCoordinate, P extends Player> = {
+        readonly [key in keyof Columns]: key extends C? P : CD[key]
+    };
+
+And I can write type-safe functions that set the field. The compiler will tell me when I implement the function incorrectly, e.g. when I do not set the "LEFT" property.
+
+    const withLeft = <CD extends Columns, P extends Player>(cols: CD, playerCharacter: P): SetColumn<CD, 'LEFT', P> => {
+        return { ...cols, LEFT: playerCharacter };
+    }
+
+I can even make sure that I have the correct functions for all coordinates:
+
+    export type WithColumnFunctions = {
+        readonly [key in ColumnCoordinate]: 
+            <CD extends Columns, P extends Player>(cols: CD, playerCharacter: P) => SetColumn<CD, key, P>
+    }
+    export const withColumnFunctions : WithColumnFunctions = {
+        LEFT: withLeft,
+        CENTER: withCenter,
+        RIGHT: withRight,
+    };
+
+And then I can use these functions to create the new board:
+
+    type WithAnyCol = <CD extends Columns, P extends Player, C extends ColumnCoordinate>(cols: CD, playerCharacter: P) => SetColumn<CD, any, P>;
+    const withCol: WithAnyCol = withColumnFunctions[column];
+    type WithAnyRow = <RD extends Rows, P extends Player, CD extends Columns> (rows: RD, withCol: (c: Columns, p: P)=>CD, playerCharacter: P) => SetRow<RD, any, CD>;
+    const withRow: WithAnyRow = withRowFunctions[row];
+    
+    return new Board(withRow(this.rows, withCol, playerCharacter), 'O');
+
+This allowed me to remove the tests
+
+    const rowCoordinates: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
+    const colCoordinates: ColumnCoordinate[] = ['LEFT', 'CENTER', 'RIGHT'];
+
+    rowCoordinates.forEach((row: RowCoordinate) => colCoordinates.forEach((column: ColumnCoordinate) => {
+        it('sets the the value at ['+row+'-'+column+'] to X', () => {
+            const board = new Board();
+
+            const newBoard = playX(row, column)(board);
+
+            expect(newBoard.rows[row][column]).to.equal('X');
+        });
+    }));
+
+9 tests removed - 35 passing. Also, two classes removed from the production code, it now works on simple, readonly TypeScript objects.
+
+## Aside: Check Whether Field is Occupied
+
+I could theoretically also check whether a field is occupied using the same technique, by introducing a type ```FreeColumns``` (which is a union of column names that are still free):
+
+    export type ColumnData = { readonly [key in ColumnCoordinate]: ColumnContent };
+    export type EmptyColumnData = { readonly [key in keyof ColumnData]: ' ' };
+    export type FreeColumns<CD extends ColumnData> = { [key in keyof CD]: CD[key] extends ' '? key : never }[keyof ColumnData];
+    export type SetColumn<CD extends ColumnData, C extends ColumnCoordinate, P extends Player> = {
+        readonly [key in keyof ColumnData]: key extends C? P : CD[key]
+    };
+
+    const withLeft = <CD extends ColumnData, C extends FreeColumns<CD> & 'LEFT', P extends Player>(columns: CD, player: P, col: C): SetColumn<CD, 'LEFT', P> => {
+        return { ...columns, LEFT: player };
+    };
+
+Then the compiler will not even allow me to set a value that has already been set:
+
+    const emptyCols : EmptyColumnData = { LEFT: ' ', CENTER: ' ', RIGHT: ' ' };
+    const wl = withLeft(emptyCols, 'X', 'LEFT');
+    //const wl2 = withLeft(wl, 'O', 'LEFT'); <-- compiler error: has already been set
+
+Also, the following is **not** possilbe:
+
+    const withColumn = <CD extends ColumnData, C extends FreeColumns<CD>, P extends Player>(columns: CD, player: P, col: C): SetColumn<CD, C, P> => {
+        return { ...columns, [col]: player };
+    };
+
+It would require [dependent types](https://en.wikipedia.org/wiki/Dependent_type) like e.g. [Idris](https://en.wikipedia.org/wiki/Idris_(programming_language) has, but those are not (yet?) available in TypeScript.

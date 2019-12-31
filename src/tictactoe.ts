@@ -6,59 +6,60 @@ export type ColumnContent = Player | ' ';
 export type ColumnCoordinate = 'LEFT' | 'CENTER' | 'RIGHT';
 export type RowCoordinate = 'TOP' | 'MIDDLE' | 'BOTTOM';
 
-export class Columns {
-	LEFT: ColumnContent;
-	CENTER: ColumnContent;
-	RIGHT: ColumnContent;
+export type Columns = { readonly [key in ColumnCoordinate]: ColumnContent };
+export type EmptyColumns = { readonly [key in ColumnCoordinate]: ' ' };
+export type SetColumn<CD extends Columns, C extends ColumnCoordinate, P extends Player> = {
+	readonly [key in keyof Columns]: key extends C? P : CD[key]
+};
 
-	constructor(LEFT: ColumnContent, CENTER: ColumnContent, RIGHT: ColumnContent) {
-		this.LEFT = LEFT;
-		this.CENTER = CENTER;
-		this.RIGHT = RIGHT;
-	}
-
-	render() {
-		return ' ' + this.LEFT + ' | ' + this.CENTER + ' | ' + this.RIGHT;
-	}
-
-	with(column: ColumnCoordinate, playerCharacter: Player): Columns {
-		switch(column) {
-			case 'LEFT':
-				return new Columns(playerCharacter, this.CENTER, this.RIGHT);
-			case 'CENTER':
-				return new Columns(this.LEFT, playerCharacter, this.RIGHT);
-			case 'RIGHT':
-				return new Columns(this.LEFT, this.CENTER, playerCharacter);
-		}
-	}
+const withLeft = <CD extends Columns, P extends Player>(cols: CD, playerCharacter: P): SetColumn<CD, 'LEFT', P> => {
+	return { ...cols, LEFT: playerCharacter };
+}
+const withCenter = <CD extends Columns, P extends Player>(cols: CD, playerCharacter: P): SetColumn<CD, 'CENTER', P> => {
+	return { ...cols, CENTER: playerCharacter };
+}
+const withRight = <CD extends Columns, P extends Player>(cols: CD, playerCharacter: P): SetColumn<CD, 'RIGHT', P> => {
+	return { ...cols, RIGHT: playerCharacter };
 }
 
-export class Rows {
-	TOP: Columns;
-	MIDDLE: Columns;
-	BOTTOM: Columns;
-
-	constructor(TOP: Columns, MIDDLE: Columns, BOTTOM: Columns) {
-		this.TOP = TOP;
-		this.MIDDLE = MIDDLE;
-		this.BOTTOM = BOTTOM;
-	}
-
-	render() {
-		return this.TOP.render() + '\n---+---+---\n' + this.MIDDLE.render() + '\n---+---+---\n' + this.BOTTOM.render();
-	}
-
-	with(row: RowCoordinate, column: ColumnCoordinate, playerCharacter: Player): Rows {
-		switch(row) {
-			case 'TOP':
-				return new Rows(this.TOP.with(column, playerCharacter), this.MIDDLE, this.BOTTOM);
-			case 'MIDDLE':
-				return new Rows(this.TOP, this.MIDDLE.with(column, playerCharacter), this.BOTTOM);
-			case 'BOTTOM':
-				return new Rows(this.TOP, this.MIDDLE, this.BOTTOM.with(column, playerCharacter));
-		}
-	}
+export type WithColumnFunctions = {
+	readonly [key in ColumnCoordinate]: 
+		<CD extends Columns, P extends Player>(cols: CD, playerCharacter: P) => SetColumn<CD, key, P>
 }
+export const withColumnFunctions : WithColumnFunctions = {
+	LEFT: withLeft,
+	CENTER: withCenter,
+	RIGHT: withRight,
+};
+
+export type Rows = { readonly [key in RowCoordinate]: Columns };
+export type SetRow<RD extends Rows, R extends RowCoordinate, C extends Columns> = {
+	readonly [key in keyof Rows]: key extends R? C : RD[key]
+};
+
+const withTop = <RD extends Rows, P extends Player, CD extends Columns>
+		(rows: RD, withCol: (c: RD['TOP'], p: P)=>CD, playerCharacter: P): SetRow<RD, 'TOP', CD> => {
+	return { ...rows, TOP: withCol(rows.TOP, playerCharacter) };
+}
+const withMiddle = <RD extends Rows, P extends Player, CD extends Columns>
+		(rows: RD, withCol: (c: RD['MIDDLE'], p: P)=>CD, playerCharacter: P): SetRow<RD, 'MIDDLE', CD> => {
+	return { ...rows, MIDDLE: withCol(rows.MIDDLE, playerCharacter) };
+}
+const withBottom = <RD extends Rows, P extends Player, CD extends Columns>
+		(rows: RD, withCol: (c: RD['BOTTOM'], p: P)=>CD, playerCharacter: P): SetRow<RD, 'BOTTOM', CD> => {
+	return { ...rows, BOTTOM: withCol(rows.BOTTOM, playerCharacter) };
+}
+
+export type WithRowFunctions = {
+	readonly [key in RowCoordinate]: 
+		<RD extends Rows, C extends ColumnCoordinate, P extends Player, CD extends Columns>
+			(rows: RD, withCol: (c: RD['TOP'], p: P)=>CD, playerCharacter: P) => SetRow<RD, key, CD>
+};
+export const withRowFunctions : WithRowFunctions = {
+	TOP: withTop,
+	MIDDLE: withMiddle,
+	BOTTOM: withBottom,
+};
 
 const rowCoordinates: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
 const colCoordinates: ColumnCoordinate[] = ['LEFT', 'CENTER', 'RIGHT'];
@@ -88,12 +89,14 @@ export const playO = <R extends RowCoordinate, C extends ColumnCoordinate>(row: 
 	<Game extends MoveSequence<any, any, PlayerX, any>>(board: Board<Game>): Board<MoveSequence<R, C, PlayerO, Game>> => 
 	board._setO(row, col);
 
+export const emptyColumns: Columns = { LEFT: ' ', CENTER: ' ', RIGHT: ' ' };
+
 export class Board<Game extends OngoingGame> {
 	_compiler_should_keep_and_check_Game?: Game;
 	rows: Rows;
 	nextPlayer: Player;
 
-	constructor(rows: Rows = new Rows(new Columns(' ', ' ', ' '), new Columns(' ', ' ', ' '), new Columns(' ', ' ', ' ')), nextPlayer: Player = 'X') {
+	constructor(rows: Rows = { TOP: emptyColumns, MIDDLE: emptyColumns, BOTTOM: emptyColumns }, nextPlayer: Player = 'X') {
 		this.rows = rows;
 		this.nextPlayer = nextPlayer;
 	}
@@ -107,7 +110,12 @@ export class Board<Game extends OngoingGame> {
 		}
 		const playerCharacter = 'X';
 
-		return new Board(this.rows.with(row, column, playerCharacter), 'O');
+		type WithAnyCol = <CD extends Columns, P extends Player, C extends ColumnCoordinate>(cols: CD, playerCharacter: P) => SetColumn<CD, any, P>;
+		const withCol: WithAnyCol = withColumnFunctions[column];
+		type WithAnyRow = <RD extends Rows, P extends Player, CD extends Columns> (rows: RD, withCol: (c: Columns, p: P)=>CD, playerCharacter: P) => SetRow<RD, any, CD>;
+		const withRow: WithAnyRow = withRowFunctions[row];
+		
+		return new Board(withRow(this.rows, withCol, playerCharacter), 'O');
 	}
 
 	_setO<R extends RowCoordinate, C extends ColumnCoordinate>(row: R, column: C): Board<MoveSequence<R, C, PlayerO, Game>> {
@@ -119,7 +127,12 @@ export class Board<Game extends OngoingGame> {
 		}
 		const playerCharacter = 'O';
 
-		return new Board(this.rows.with(row, column, playerCharacter), 'X');
+		type WithAnyCol = <CD extends Columns, P extends Player, C extends ColumnCoordinate>(cols: CD, playerCharacter: P) => SetColumn<CD, any, P>;
+		const withCol: WithAnyCol = withColumnFunctions[column];
+		type WithAnyRow = <RD extends Rows, P extends Player, CD extends Columns> (rows: RD, withCol: (c: Columns, p: P)=>CD, playerCharacter: P) => SetRow<RD, any, CD>;
+		const withRow: WithAnyRow = withRowFunctions[row];
+		
+		return new Board(withRow(this.rows, withCol, playerCharacter), 'O');
 	}
 
 	status() {
@@ -133,7 +146,11 @@ export class Board<Game extends OngoingGame> {
 	}
 
 	render() {
-		return this.rows.render();
+		return this._renderCols(this.rows.TOP) + '\n---+---+---\n' + this._renderCols(this.rows.MIDDLE) + '\n---+---+---\n' + this._renderCols(this.rows.BOTTOM);
+	}
+
+	_renderCols(cols: Columns): string {
+		return ' ' + cols.LEFT + ' | ' + cols.CENTER + ' | ' + cols.RIGHT;
 	}
 
 	_hasWon(player: Player) {
