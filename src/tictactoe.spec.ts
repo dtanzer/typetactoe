@@ -7,6 +7,7 @@ import {Board, playX, playO} from './tictactoe'
 
 describe('typetactoe', () => {
 	const isFreeField = 'T';
+	const isGameOver = 'F';
 
 	const players: Player[] = ['X', 'O'];
 	players.forEach(player => [
@@ -40,11 +41,6 @@ describe('typetactoe', () => {
 
 			expect(status).to.equal('Player "'+player+'" has won.');
 		});
-
-		it('does now allow another move when a player has won', () => {
-			const col = winningCombo[3]===1? 'CENTER': 'LEFT';
-			expect(() => playX('MIDDLE', col)(board, isFreeField)).to.throw('Illegal move by player "X": "'+player+'" has already won.');
-		});
 	}));
 
 	it('Prints next player as status when game is running', () => {
@@ -58,15 +54,15 @@ describe('typetactoe', () => {
 	it('Prints game is draw when all cells are filled and nobody has won', () => {
 		const board = new Board();
 
-		const board1 = playX('TOP', 'LEFT')(board, isFreeField);
-		const board2 = playO('MIDDLE', 'CENTER')(board1, isFreeField);
-		const board3 = playX('MIDDLE', 'LEFT')(board2, isFreeField);
-		const board4 = playO('BOTTOM', 'LEFT')(board3, isFreeField);
-		const board5 = playX('TOP', 'RIGHT')(board4, isFreeField);
-		const board6 = playO('TOP', 'CENTER')(board5, isFreeField);
-		const board7 = playX('BOTTOM', 'CENTER')(board6, isFreeField);
-		const board8 = playO('BOTTOM', 'RIGHT')(board7, isFreeField);
-		const board9 = playX('MIDDLE', 'RIGHT')(board8, isFreeField);
+		const board1 = playX('TOP', 'LEFT')(board, isFreeField, isGameOver);
+		const board2 = playO('MIDDLE', 'CENTER')(board1, isFreeField, isGameOver);
+		const board3 = playX('MIDDLE', 'LEFT')(board2, isFreeField, isGameOver);
+		const board4 = playO('BOTTOM', 'LEFT')(board3, isFreeField, isGameOver);
+		const board5 = playX('TOP', 'RIGHT')(board4, isFreeField, isGameOver);
+		const board6 = playO('TOP', 'CENTER')(board5, isFreeField, isGameOver);
+		const board7 = playX('BOTTOM', 'CENTER')(board6, isFreeField, isGameOver);
+		const board8 = playO('BOTTOM', 'RIGHT')(board7, isFreeField, isGameOver);
+		const board9 = playX('MIDDLE', 'RIGHT')(board8, isFreeField, isGameOver);
 
 		const status = board9.status();
 		

@@ -297,3 +297,90 @@ And I can also remove the checks from the production code:
     }
 
 1 test removed - 34 passing.
+
+## Aside: Why not a Single Play Function?
+
+Why are there the two functions ```playX``` and ```playO```? After Samir Talwar asked me this question, I tried to implement a generic ```play``` function:
+
+    type OtherPlayer<P extends Player> = P extends 'X'? PlayerO : PlayerX;
+
+    export const play = <R extends RowCoordinate, C extends ColumnCoordinate, P extends Player>(row: R, col: C, player: P) => 
+        <Game extends MoveSequence<any, any, PlayerX, any>,
+        IsFreeField extends Not<IsPlayed<R, C, Game>>,
+        Other extends OtherPlayer<P>>(board: Board<Game>, otherPlayer: Other, isFreeField: IsFreeField & 'T'): Board<MoveSequence<R, C, Other, Game>> => 
+        board._set(row, col, player, otherPlayer);
+
+...but I cannot use the function in a way so that it compiles:
+
+    Type 'OngoingGame' is not assignable to type 'MoveSequence<any, any, "X", any>'.
+      Type 'EmptyGame' is not assignable to type 'MoveSequence<any, any, "X", any>'.
+        Types of property 'isEmpty' are incompatible.
+            Type '"T"' is not assignable to type '"F"'.
+
+            const board1 = play('TOP', 'LEFT', 'X')(board, 'O', isFreeField);
+
+It might be possible to achieve this goal by creating two ```play``` functions with the same name but different signatures, but then I basically have the same situation as before.
+
+## Step 8: Nobody Can Play after Player has Won
+
+I added types to decide whether a player has won, based on the list of all previous moves:
+
+    type IsPlayer<G extends OngoingGame, R extends RowCoordinate, C extends ColumnCoordinate, P extends Player> = {
+        T: 'F'
+        F: If<
+            And<Eq<G['R'], R>, Eq<G['C'], C>>, 
+            Eq<G['P'], P>, 
+            IsPlayer<G['PrevMove'], R, C, P>
+        >
+    }[G['isEmpty']]
+
+    type HasWon<G extends OngoingGame, P extends Player> = {
+        T: 'F'
+        F: Or<
+            And<IsPlayer<G, 'TOP', 'LEFT', P>, And<IsPlayer<G, 'TOP', 'CENTER', P>, IsPlayer<G, 'TOP', 'RIGHT', P>>>,
+            Or<And<IsPlayer<G, 'MIDDLE', 'LEFT', P>, And<IsPlayer<G, 'MIDDLE', 'CENTER', P>, IsPlayer<G, 'MIDDLE', 'RIGHT', P>>>,
+            Or<And<IsPlayer<G, 'BOTTOM', 'LEFT', P>, And<IsPlayer<G, 'BOTTOM', 'CENTER', P>, IsPlayer<G, 'BOTTOM', 'RIGHT', P>>>,
+            
+            Or<And<IsPlayer<G, 'TOP', 'LEFT', P>, And<IsPlayer<G, 'MIDDLE', 'LEFT', P>, IsPlayer<G, 'BOTTOM', 'LEFT', P>>>,
+            Or<And<IsPlayer<G, 'TOP', 'CENTER', P>, And<IsPlayer<G, 'MIDDLE', 'CENTER', P>, IsPlayer<G, 'BOTTOM', 'CENTER', P>>>,
+            Or<And<IsPlayer<G, 'TOP', 'RIGHT', P>, And<IsPlayer<G, 'MIDDLE', 'RIGHT', P>, IsPlayer<G, 'BOTTOM', 'RIGHT', P>>>,
+            
+            Or<And<IsPlayer<G, 'TOP', 'LEFT', P>, And<IsPlayer<G, 'MIDDLE', 'CENTER', P>, IsPlayer<G, 'BOTTOM', 'RIGHT', P>>>,
+            And<IsPlayer<G, 'TOP', 'RIGHT', P>, And<IsPlayer<G, 'MIDDLE', 'CENTER', P>, IsPlayer<G, 'BOTTOM', 'LEFT', P>>>>>>>>>
+        >
+    }[G['isEmpty']]
+
+And I added another parameter to the ```play``` functions that is either ```'F'``` when nobody has won the game yet or ```never``` otherwise:
+
+    export const playX = <R extends RowCoordinate, C extends ColumnCoordinate>(row: R, col: C) => 
+        <
+            Game extends EmptyGame | MoveSequence<any, any, PlayerO, any>,
+            IsFreeField extends Not<IsPlayed<R, C, Game>>,
+            IsGameOver extends Or<HasWon<Game, 'X'>, HasWon<Game, 'O'>>
+        >
+        (board: Board<Game>, isFreeField: IsFreeField & 'T', isGameOver: IsGameOver & 'F'): Board<MoveSequence<R, C, PlayerX, Game>> => 
+        board._setX(row, col);
+
+...which should be used with a parameter that is always ```'F'```:
+
+    const isGameOver = 'F';
+
+    const board1 = playX('TOP', 'LEFT')(board, isFreeField, isGameOver);
+
+Nobody can play anymore when the game is over, so ```game-2.ts``` does not compile anymore:
+
+    const board6 = playO('MIDDLE', 'RIGHT')(board5, isFreeField, isGameOver); //compiler error: Argument of type '"F"' is not assignable to parameter of type 'never'.
+
+...and because of that, I can remove the checks for a won game from the production code:
+
+    if(this._hasWon('X')) throw 'Illegal move by player "'+this.nextPlayer+'": "X" has already won.';
+    if(this._hasWon('O')) throw 'Illegal move by player "'+this.nextPlayer+'": "O" has already won.';
+
+Now, the following tests are redundant:
+
+    it('does now allow another move when a player has won', () => {
+        const col = winningCombo[3]===1? 'CENTER': 'LEFT';
+        expect(() => playX('MIDDLE', col)(board, isFreeField, isGameOver)).to.throw('Illegal move by player "X": "'+player+'" has already won.');
+    });
+
+16 tests removed - 18 passing.

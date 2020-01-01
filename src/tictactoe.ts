@@ -92,7 +92,7 @@ type If<B extends Bool, Then, Else> = {
 type Not<B extends Bool> = If<B, 'F', 'T'>
 
 type And<B1 extends Bool, B2 extends Bool> = If<B1, B2, 'F'>
-
+type Or<B1 extends Bool, B2 extends Bool> = If<Not<B1>, B2, 'T'>
 type Eq<A extends string, B extends string> = ({ [K in A]: 'T' } & {
 	[key: string]: 'F'
 })[B]
@@ -106,16 +106,45 @@ type IsPlayed<R extends RowCoordinate, C extends ColumnCoordinate, G extends Ong
 	>
 }[G['isEmpty']]
 
+type IsPlayer<G extends OngoingGame, R extends RowCoordinate, C extends ColumnCoordinate, P extends Player> = {
+	T: 'F'
+	F: If<
+		And<Eq<G['R'], R>, Eq<G['C'], C>>, 
+		Eq<G['P'], P>, 
+		IsPlayer<G['PrevMove'], R, C, P>
+	>
+}[G['isEmpty']]
+
+type HasWon<G extends OngoingGame, P extends Player> = {
+	T: 'F'
+	F: Or<
+		And<IsPlayer<G, 'TOP', 'LEFT', P>, And<IsPlayer<G, 'TOP', 'CENTER', P>, IsPlayer<G, 'TOP', 'RIGHT', P>>>,
+		Or<And<IsPlayer<G, 'MIDDLE', 'LEFT', P>, And<IsPlayer<G, 'MIDDLE', 'CENTER', P>, IsPlayer<G, 'MIDDLE', 'RIGHT', P>>>,
+		Or<And<IsPlayer<G, 'BOTTOM', 'LEFT', P>, And<IsPlayer<G, 'BOTTOM', 'CENTER', P>, IsPlayer<G, 'BOTTOM', 'RIGHT', P>>>,
+		
+		Or<And<IsPlayer<G, 'TOP', 'LEFT', P>, And<IsPlayer<G, 'MIDDLE', 'LEFT', P>, IsPlayer<G, 'BOTTOM', 'LEFT', P>>>,
+		Or<And<IsPlayer<G, 'TOP', 'CENTER', P>, And<IsPlayer<G, 'MIDDLE', 'CENTER', P>, IsPlayer<G, 'BOTTOM', 'CENTER', P>>>,
+		Or<And<IsPlayer<G, 'TOP', 'RIGHT', P>, And<IsPlayer<G, 'MIDDLE', 'RIGHT', P>, IsPlayer<G, 'BOTTOM', 'RIGHT', P>>>,
+		
+		Or<And<IsPlayer<G, 'TOP', 'LEFT', P>, And<IsPlayer<G, 'MIDDLE', 'CENTER', P>, IsPlayer<G, 'BOTTOM', 'RIGHT', P>>>,
+		And<IsPlayer<G, 'TOP', 'RIGHT', P>, And<IsPlayer<G, 'MIDDLE', 'CENTER', P>, IsPlayer<G, 'BOTTOM', 'LEFT', P>>>>>>>>>
+	>
+}[G['isEmpty']]
+
 export const playX = <R extends RowCoordinate, C extends ColumnCoordinate>(row: R, col: C) => 
 	<
 		Game extends EmptyGame | MoveSequence<any, any, PlayerO, any>,
-		IsFreeField extends Not<IsPlayed<R, C, Game>>
+		IsFreeField extends Not<IsPlayed<R, C, Game>>,
+		IsGameOver extends Or<HasWon<Game, 'X'>, HasWon<Game, 'O'>>
 	>
-	(board: Board<Game>, isFreeField: IsFreeField & 'T'): Board<MoveSequence<R, C, PlayerX, Game>> => 
+	(board: Board<Game>, isFreeField: IsFreeField & 'T', isGameOver: IsGameOver & 'F'): Board<MoveSequence<R, C, PlayerX, Game>> => 
 	board._setX(row, col);
 export const playO = <R extends RowCoordinate, C extends ColumnCoordinate>(row: R, col: C) => 
-	<Game extends MoveSequence<any, any, PlayerX, any>,
-	IsFreeField extends Not<IsPlayed<R, C, Game>>>(board: Board<Game>, isFreeField: IsFreeField & 'T'): Board<MoveSequence<R, C, PlayerO, Game>> => 
+	<
+		Game extends MoveSequence<any, any, PlayerX, any>,
+		IsFreeField extends Not<IsPlayed<R, C, Game>>,
+		IsGameOver extends Or<HasWon<Game, 'X'>, HasWon<Game, 'O'>>
+	>(board: Board<Game>, isFreeField: IsFreeField & 'T', isGameOver: IsGameOver & 'F'): Board<MoveSequence<R, C, PlayerO, Game>> => 
 	board._setO(row, col);
 
 export const emptyColumns: Columns = { LEFT: ' ', CENTER: ' ', RIGHT: ' ' };
@@ -129,11 +158,8 @@ export class Board<Game extends OngoingGame> {
 		this.rows = rows;
 		this.nextPlayer = nextPlayer;
 	}
-	
-	_setX<R extends RowCoordinate, C extends ColumnCoordinate>(row: R, column: C): Board<MoveSequence<R, C, PlayerX, Game>> {
-		if(this._hasWon('X')) throw 'Illegal move by player "'+this.nextPlayer+'": "X" has already won.';
-		if(this._hasWon('O')) throw 'Illegal move by player "'+this.nextPlayer+'": "O" has already won.';
 
+	_setX<R extends RowCoordinate, C extends ColumnCoordinate>(row: R, column: C): Board<MoveSequence<R, C, PlayerX, Game>> {
 		const playerCharacter = 'X';
 
 		type WithAnyCol = <CD extends Columns, P extends Player, C extends ColumnCoordinate>(cols: CD, playerCharacter: P) => SetColumn<CD, any, P>;
@@ -145,9 +171,6 @@ export class Board<Game extends OngoingGame> {
 	}
 
 	_setO<R extends RowCoordinate, C extends ColumnCoordinate>(row: R, column: C): Board<MoveSequence<R, C, PlayerO, Game>> {
-		if(this._hasWon('X')) throw 'Illegal move by player "'+this.nextPlayer+'": "X" has already won.';
-		if(this._hasWon('O')) throw 'Illegal move by player "'+this.nextPlayer+'": "O" has already won.';
-
 		const playerCharacter = 'O';
 
 		type WithAnyCol = <CD extends Columns, P extends Player, C extends ColumnCoordinate>(cols: CD, playerCharacter: P) => SetColumn<CD, any, P>;
