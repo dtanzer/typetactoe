@@ -150,6 +150,14 @@ export const playO = <R extends RowCoordinate, C extends ColumnCoordinate>(row: 
 
 export const emptyColumns: Columns = { LEFT: ' ', CENTER: ' ', RIGHT: ' ' };
 
+export type NextPlayerMoves = {
+	[P in Player]: P extends PlayerX? 'Your move, player X...': P extends PlayerO? 'Your move, player O...' : never
+}
+const nextPlayerMoves: NextPlayerMoves = {
+	X: 'Your move, player X...',
+	O: 'Your move, player O...',
+}
+
 export class Board<NextPlayer extends Player, Game extends OngoingGame<OtherPlayer<NextPlayer>>> {
 	_compiler_should_keep_and_check_Game?: Game;
 	rows: Rows;
@@ -189,12 +197,22 @@ export class Board<NextPlayer extends Player, Game extends OngoingGame<OtherPlay
 		if(isFull) return 'Game over, nobody has won.';
 		if(this._hasWon('X')) return 'Player "X" has won.';
 		if(this._hasWon('O')) return 'Player "O" has won.';
-		return 'Your move, player "'+this.nextPlayer+'"...';
+		return 'Game is still running';
 	}
 
-	status2() {
-		return 'Your move, player X...'
+	nextPlayerMove(): NextPlayerMoves[NextPlayer] {
+		return nextPlayerMoves[this.nextPlayer]
 	}
+
+	/*
+	nextPlayerMove(): NextPlayer extends PlayerX? 'Your move, player X...': 'Your move, player O...' {
+		if(this.nextPlayer === 'X') {
+			return 'Your move, player X...';
+		} else {
+			return 'Your move, player O...';
+		}
+	}
+	*/
 
 	render() {
 		return this._renderCols(this.rows.TOP) + '\n---+---+---\n' + this._renderCols(this.rows.MIDDLE) + '\n---+---+---\n' + this._renderCols(this.rows.BOTTOM);

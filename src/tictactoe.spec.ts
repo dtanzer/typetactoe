@@ -43,12 +43,12 @@ describe('typetactoe', () => {
 		});
 	}));
 
-	it('Prints next player as status when game is running', () => {
+	it('Prints game is still running in an ongoing game', () => {
 		const board = new Board('X');
 
 		const status = board.status();
 
-		expect(status).to.equal('Your move, player "X"...');
+		expect(status).to.equal('Game is still running');
 	});
 
 	it('Prints game is draw when all cells are filled and nobody has won', () => {

@@ -416,3 +416,43 @@ export type OtherPlayer<P extends Player> = P extends PlayerX? PlayerO : PlayerX
 This already prevents the bug: It is not possible to write the wrong code anymore. But there are still some compiler errors: In a few other places, the current player of the ongoing game does not matter. So, there I changed it to `OngoingGame<any>`.
 
 18 tests passing
+
+## Step 10: Typesafe nextPlayer function
+
+The status function currently mixes two different outputs: Who is the next player, and whether the game is running or how it has ended. When I move "who is the next player" out into it's own function, I can make the return value type-safe. But I cannot remove any tests, because the old status function needs a new test: "game is ongoing".
+
+**What doesn't work:**
+
+```
+nextPlayerMove(): NextPlayer extends PlayerX? 'Your move, player X...': 'Your move, player O...' {
+    if(this.nextPlayer === 'X') {
+        return 'Your move, player X...';
+    } else {
+        return 'Your move, player O...';
+    }
+}
+```
+
+The TS compiler does not recognize the fact that inside the `if`, the type is actually more narrow than outside. So, I must give the compiler a hint. I can do that by defining an object with the return values and moving the conditional type into the type of that object:
+
+```
+nextPlayerMove(): NextPlayerMoves[NextPlayer] {
+    return nextPlayerMoves[this.nextPlayer]
+}
+```
+
+Where the next player moves are defined as follows:
+
+```
+export type NextPlayerMoves = {
+    [P in Player]: P extends PlayerX? 'Your move, player X...': P extends PlayerO? 'Your move, player O...' : never
+}
+const nextPlayerMoves: NextPlayerMoves = {
+    X: 'Your move, player X...',
+    O: 'Your move, player O...',
+}
+```
+
+Now, the game cannot print a wrong "Your move, Player [P]..." message ever again, so I do not need an additional test for that.
+
+18 tests passing
