@@ -411,7 +411,9 @@ export class Board<NextPlayer extends Player, Game extends OngoingGame<OtherPlay
 
 The `OngoingGame` now also gets a generic parameter for the _current_ player&mdash;and that's the `OtherPlayer` as compared to the `NextPlayer`:
 
+```
 export type OtherPlayer<P extends Player> = P extends PlayerX? PlayerO : PlayerX;
+```
 
 This already prevents the bug: It is not possible to write the wrong code anymore. But there are still some compiler errors: In a few other places, the current player of the ongoing game does not matter. So, there I changed it to `OngoingGame<any>`.
 
