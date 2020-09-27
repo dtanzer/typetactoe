@@ -384,3 +384,35 @@ Now, the following tests are redundant:
     });
 
 16 tests removed - 18 passing.
+
+## Step 9: Bug! _setO(...) Returns Wrong Board
+
+So, there's a problem in the code from the last step, and it actually existed for quite some time. `_setX` and `_setO` can return a board with the wrong `nextPlayer`&mdash;and in fact, `_setO` does. After setting an "O", the next player should be "X", but `_setO` returns
+
+```
+return new Board(withRow(this.rows, withCol, playerCharacter), 'O');
+```
+
+First, I added a generic parameter `NextPlayer` to the board and changed `nextPlayer` to this type. Since the constructor parameter now cannot have a default value anymore, I moved it to the front of the argument list:
+
+```
+export class Board<NextPlayer extends Player, Game extends OngoingGame<OtherPlayer<NextPlayer>>> {
+    _compiler_should_keep_and_check_Game?: Game;
+    rows: Rows;
+    nextPlayer: NextPlayer;
+
+    constructor(nextPlayer: NextPlayer, rows: Rows = { TOP: emptyColumns, MIDDLE: emptyColumns, BOTTOM: emptyColumns }) {
+        this.rows = rows;
+        this.nextPlayer = nextPlayer;
+    }
+    ...
+}
+```
+
+The `OngoingGame` now also gets a generic parameter for the _current_ player&mdash;and that's the `OtherPlayer` as compared to the `NextPlayer`:
+
+export type OtherPlayer<P extends Player> = P extends PlayerX? PlayerO : PlayerX;
+
+This already prevents the bug: It is not possible to write the wrong code anymore. But there are still some compiler errors: In a few other places, the current player of the ongoing game does not matter. So, there I changed it to `OngoingGame<any>`.
+
+18 tests passing

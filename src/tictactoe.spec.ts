@@ -34,7 +34,7 @@ describe('typetactoe', () => {
 				col=0;
 			}
 		});
-		const board = new Board({ TOP: allCols[0], MIDDLE: allCols[1], BOTTOM: allCols[2]});
+		const board = new Board('X', { TOP: allCols[0], MIDDLE: allCols[1], BOTTOM: allCols[2]});
 
 		it('prints player '+player+' has won when winning combo is '+winningCombo, () => {
 			const status = board.status();
@@ -44,7 +44,7 @@ describe('typetactoe', () => {
 	}));
 
 	it('Prints next player as status when game is running', () => {
-		const board = new Board();
+		const board = new Board('X');
 
 		const status = board.status();
 
@@ -52,7 +52,7 @@ describe('typetactoe', () => {
 	});
 
 	it('Prints game is draw when all cells are filled and nobody has won', () => {
-		const board = new Board();
+		const board = new Board('X');
 
 		const board1 = playX('TOP', 'LEFT')(board, isFreeField, isGameOver);
 		const board2 = playO('MIDDLE', 'CENTER')(board1, isFreeField, isGameOver);

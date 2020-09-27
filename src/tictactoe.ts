@@ -1,6 +1,7 @@
 type PlayerX = 'X';
 type PlayerO = 'O';
 export type Player = PlayerX | PlayerO;
+export type OtherPlayer<P extends Player> = P extends PlayerX? PlayerO : PlayerX;
 export type ColumnContent = Player | ' ';
 
 export type ColumnCoordinate = 'LEFT' | 'CENTER' | 'RIGHT';
@@ -72,7 +73,7 @@ interface EmptyGame {
 	PrevMove: never
 };
 
-interface MoveSequence<R extends RowCoordinate, C extends ColumnCoordinate, P extends Player, Game extends OngoingGame> {
+interface MoveSequence<R extends RowCoordinate, C extends ColumnCoordinate, P extends Player, Game extends OngoingGame<any>> {
 	isEmpty: 'F'
 	R: R
 	C: C
@@ -80,7 +81,7 @@ interface MoveSequence<R extends RowCoordinate, C extends ColumnCoordinate, P ex
 	PrevMove: Game
 };
 
-type OngoingGame = EmptyGame | MoveSequence<any, any, any, any>;
+type OngoingGame<CurrentPlayer extends Player> = EmptyGame | MoveSequence<any, any, CurrentPlayer, any>;
 
 type Bool = 'T' | 'F'
 
@@ -97,7 +98,7 @@ type Eq<A extends string, B extends string> = ({ [K in A]: 'T' } & {
 	[key: string]: 'F'
 })[B]
 
-type IsPlayed<R extends RowCoordinate, C extends ColumnCoordinate, G extends OngoingGame> = {
+type IsPlayed<R extends RowCoordinate, C extends ColumnCoordinate, G extends OngoingGame<any>> = {
 	T: 'F'
 	F: If<
 		And<Eq<G['R'], R>, Eq<G['C'], C>>, 
@@ -106,7 +107,7 @@ type IsPlayed<R extends RowCoordinate, C extends ColumnCoordinate, G extends Ong
 	>
 }[G['isEmpty']]
 
-type IsPlayer<G extends OngoingGame, R extends RowCoordinate, C extends ColumnCoordinate, P extends Player> = {
+type IsPlayer<G extends OngoingGame<any>, R extends RowCoordinate, C extends ColumnCoordinate, P extends Player> = {
 	T: 'F'
 	F: If<
 		And<Eq<G['R'], R>, Eq<G['C'], C>>, 
@@ -115,7 +116,7 @@ type IsPlayer<G extends OngoingGame, R extends RowCoordinate, C extends ColumnCo
 	>
 }[G['isEmpty']]
 
-type HasWon<G extends OngoingGame, P extends Player> = {
+type HasWon<G extends OngoingGame<any>, P extends Player> = {
 	T: 'F'
 	F: Or<
 		And<IsPlayer<G, 'TOP', 'LEFT', P>, And<IsPlayer<G, 'TOP', 'CENTER', P>, IsPlayer<G, 'TOP', 'RIGHT', P>>>,
@@ -137,29 +138,29 @@ export const playX = <R extends RowCoordinate, C extends ColumnCoordinate>(row: 
 		IsFreeField extends Not<IsPlayed<R, C, Game>>,
 		IsGameOver extends Or<HasWon<Game, 'X'>, HasWon<Game, 'O'>>
 	>
-	(board: Board<Game>, isFreeField: IsFreeField & 'T', isGameOver: IsGameOver & 'F'): Board<MoveSequence<R, C, PlayerX, Game>> => 
+	(board: Board<PlayerX, Game>, isFreeField: IsFreeField & 'T', isGameOver: IsGameOver & 'F'): Board<PlayerO, MoveSequence<R, C, PlayerX, Game>> => 
 	board._setX(row, col);
 export const playO = <R extends RowCoordinate, C extends ColumnCoordinate>(row: R, col: C) => 
 	<
 		Game extends MoveSequence<any, any, PlayerX, any>,
 		IsFreeField extends Not<IsPlayed<R, C, Game>>,
 		IsGameOver extends Or<HasWon<Game, 'X'>, HasWon<Game, 'O'>>
-	>(board: Board<Game>, isFreeField: IsFreeField & 'T', isGameOver: IsGameOver & 'F'): Board<MoveSequence<R, C, PlayerO, Game>> => 
+	>(board: Board<PlayerO, Game>, isFreeField: IsFreeField & 'T', isGameOver: IsGameOver & 'F'): Board<PlayerX, MoveSequence<R, C, PlayerO, Game>> => 
 	board._setO(row, col);
 
 export const emptyColumns: Columns = { LEFT: ' ', CENTER: ' ', RIGHT: ' ' };
 
-export class Board<Game extends OngoingGame> {
+export class Board<NextPlayer extends Player, Game extends OngoingGame<OtherPlayer<NextPlayer>>> {
 	_compiler_should_keep_and_check_Game?: Game;
 	rows: Rows;
-	nextPlayer: Player;
+	nextPlayer: NextPlayer;
 
-	constructor(rows: Rows = { TOP: emptyColumns, MIDDLE: emptyColumns, BOTTOM: emptyColumns }, nextPlayer: Player = 'X') {
+	constructor(nextPlayer: NextPlayer, rows: Rows = { TOP: emptyColumns, MIDDLE: emptyColumns, BOTTOM: emptyColumns }) {
 		this.rows = rows;
 		this.nextPlayer = nextPlayer;
 	}
 
-	_setX<R extends RowCoordinate, C extends ColumnCoordinate>(row: R, column: C): Board<MoveSequence<R, C, PlayerX, Game>> {
+	_setX<R extends RowCoordinate, C extends ColumnCoordinate>(row: R, column: C): Board<PlayerO, MoveSequence<R, C, PlayerX, Game>> {
 		const playerCharacter = 'X';
 
 		type WithAnyCol = <CD extends Columns, P extends Player, C extends ColumnCoordinate>(cols: CD, playerCharacter: P) => SetColumn<CD, any, P>;
@@ -167,10 +168,10 @@ export class Board<Game extends OngoingGame> {
 		type WithAnyRow = <RD extends Rows, P extends Player, CD extends Columns> (rows: RD, withCol: (c: Columns, p: P)=>CD, playerCharacter: P) => SetRow<RD, any, CD>;
 		const withRow: WithAnyRow = withRowFunctions[row];
 		
-		return new Board(withRow(this.rows, withCol, playerCharacter), 'O');
+		return new Board('O', withRow(this.rows, withCol, playerCharacter));
 	}
 
-	_setO<R extends RowCoordinate, C extends ColumnCoordinate>(row: R, column: C): Board<MoveSequence<R, C, PlayerO, Game>> {
+	_setO<R extends RowCoordinate, C extends ColumnCoordinate>(row: R, column: C): Board<PlayerX, MoveSequence<R, C, PlayerO, Game>> {
 		const playerCharacter = 'O';
 
 		type WithAnyCol = <CD extends Columns, P extends Player, C extends ColumnCoordinate>(cols: CD, playerCharacter: P) => SetColumn<CD, any, P>;
@@ -178,7 +179,7 @@ export class Board<Game extends OngoingGame> {
 		type WithAnyRow = <RD extends Rows, P extends Player, CD extends Columns> (rows: RD, withCol: (c: Columns, p: P)=>CD, playerCharacter: P) => SetRow<RD, any, CD>;
 		const withRow: WithAnyRow = withRowFunctions[row];
 		
-		return new Board(withRow(this.rows, withCol, playerCharacter), 'O');
+		return new Board('X', withRow(this.rows, withCol, playerCharacter));
 	}
 
 	status() {
@@ -189,6 +190,10 @@ export class Board<Game extends OngoingGame> {
 		if(this._hasWon('X')) return 'Player "X" has won.';
 		if(this._hasWon('O')) return 'Player "O" has won.';
 		return 'Your move, player "'+this.nextPlayer+'"...';
+	}
+
+	status2() {
+		return 'Your move, player X...'
 	}
 
 	render() {
