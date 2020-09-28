@@ -1,6 +1,6 @@
 import { Board, playX, playO } from './tictactoe';
 
-const board = new Board();
+const board = new Board('X');
 const isFreeField = 'T';
 const isGameOver = 'F';
 

@@ -1,12 +1,13 @@
 import { Board, playX, playO } from './tictactoe';
 
-const board = new Board();
+const board = new Board('X');
 const isFreeField = 'T';
+const isGameOver = 'F';
 
-const board1 = playX('TOP', 'LEFT')(board, isFreeField);
+const board1 = playX('TOP', 'LEFT')(board, isFreeField, isGameOver);
 console.log(board1.render());
 console.log(board1.status());
 
-const board2 = playO('TOP', 'LEFT')(board1, isFreeField);
+const board2 = playO('TOP', 'LEFT')(board1, isFreeField, isGameOver);
 console.log(board2.render());
 console.log(board2.status());
