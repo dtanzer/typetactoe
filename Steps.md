@@ -67,7 +67,7 @@ Now the checks for illegal coordinates in the production code can be removed too
 
 ...this required me to add some more type annotations; Otherwise, everything is still the same as after Step 2.
 
-## Step 4: Refactor to Immutable State Transisions
+## Step 4: Refactor to Immutable State Transitions
 
 For the next steps, we need immutable state transitions, so I refactored towards them in this step.
 
@@ -224,7 +224,7 @@ Then the compiler will not even allow me to set a value that has already been se
 
 But I didn't manage to implement the whole setting code (rows and columns) like that. And even if it was possible, it would become quite complicated. Fortunately, there's another way to achieve it (which is quite complicated in a different way)...
 
-Also, the following is **not** possilbe:
+Also, the following is **not** possible:
 
     const withColumn = <CD extends ColumnData, C extends FreeColumns<CD>, P extends Player>(columns: CD, player: P, col: C): SetColumn<CD, C, P> => {
         return { ...columns, [col]: player };
