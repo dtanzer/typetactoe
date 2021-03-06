@@ -62,8 +62,8 @@ export const withRowFunctions : WithRowFunctions = {
 	BOTTOM: withBottom,
 };
 
-const rowCoordinates: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
-const colCoordinates: ColumnCoordinate[] = ['LEFT', 'CENTER', 'RIGHT'];
+export const rowCoordinates: RowCoordinate[] = ['TOP', 'MIDDLE', 'BOTTOM'];
+export const colCoordinates: ColumnCoordinate[] = ['LEFT', 'CENTER', 'RIGHT'];
 
 interface EmptyGame {
 	isEmpty: 'T'

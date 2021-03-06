@@ -458,3 +458,58 @@ const nextPlayerMoves: NextPlayerMoves = {
 Now, the game cannot print a wrong "Your move, Player [P]..." message ever again, so I do not need an additional test for that.
 
 18 tests passing
+
+## Step 11: Can we have a typesafe status output?
+
+We can create a function `getDrawText(board)` that only works when the result of `board` is actually a draw. i.e. the following code
+(implemented in `status.ts`) works:
+
+```typescript
+function printStatus(board: Rows) {
+    if(isFull(board)) console.log(getDrawText(board));
+}
+```
+
+but this code does not compile:
+
+```typescript
+function printStatus(board: Rows) {
+    console.log(getDrawText(board));
+}
+```
+
+The trick is to create a type that represents a board where all fields are set:
+
+```typescript
+type HasSetColumn<C extends ColumnCoordinate> = { [key in ColumnCoordinate]: key extends C? Player : ColumnContent }
+type HasAllSet = HasSetColumn<'LEFT'> & HasSetColumn<'CENTER'> & HasSetColumn<'RIGHT'>
+type HasAllFieldsSet = { [key in RowCoordinate]: HasAllSet }
+```
+
+Then create a function to get the text that can only be called when the board has this type:
+
+```typescript
+function getDrawText(board: HasAllFieldsSet): 'Game over, nobody has won.' {
+    return 'Game over, nobody has won.';
+}
+```
+
+...and create a function that works a a guard for the board:
+
+```typescript
+function isFull(board: Rows): board is HasAllFieldsSet {
+    return rowCoordinates.reduce((prev: boolean, row: RowCoordinate) => {
+        return prev && colCoordinates.reduce((prev, col)=> prev && board[row][col]!==' ', true)
+    }, true)
+}
+```
+
+**But there are at least TWO problems with this approach:**
+
+* `isFull` can return anything and the compiler would not complain. It could return
+  the literal value `true` and everything would still compile. The compiler trusts
+  us here when we say `board is HasAllFieldsSet`, so we have to thoroughly test
+  **this** function now
+* Expanding that code to all possibilities (draw, X has won, O has won, still running)
+  would require **a lot** of code, and I am not even sure if it would be possible
+  to create a type for "game is still running".
